@@ -39,5 +39,5 @@ public:
 	void OnBarrelHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	UFUNCTION(BlueprintCallable)
-	void Explode();
+	void Explode(AActor* OtherActor);
 };

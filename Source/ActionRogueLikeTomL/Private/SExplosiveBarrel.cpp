@@ -26,6 +26,7 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 		RadialForceComp->ImpulseStrength = 2000;
 		RadialForceComp->bImpulseVelChange = true;
 		RadialForceComp->SetAutoActivate(false);
+		RadialForceComp->AddCollisionChannelToAffect(ECC_WorldDynamic);
 		RadialForceComp->SetupAttachment(StaticMeshComp);
 	}
 }
@@ -55,14 +56,23 @@ void ASExplosiveBarrel::Tick(float DeltaTime)
 
 void ASExplosiveBarrel::OnBarrelHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	Explode();
+	//FString CombinedString = FString::Printf(TEXT("Hit at location: %s"), *Hit.ImpactPoint.ToString());
+	//DrawDebugString(GetWorld(), Hit.ImpactPoint, CombinedString, nullptr, FColor::Green, 2.0f, true);
+
+	Explode(OtherActor);
 }
 
-void ASExplosiveBarrel::Explode()
+void ASExplosiveBarrel::Explode(AActor* OtherActor)
 {
+	UE_LOG(LogTemp, Log, TEXT("[%f] Barrel exploded, by: %s"), GetWorld()->TimeSeconds, *GetNameSafe(OtherActor));
+
 	if (RadialForceComp)
 	{
 		RadialForceComp->FireImpulse();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Radial force component is invalid."));
 	}
 }
 
