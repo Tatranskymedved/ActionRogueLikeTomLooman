@@ -85,10 +85,10 @@ void USInteractionComponent::PrimaryInteract()
 					ISGameplayInterface::Execute_Interact(HitActor, MyOwnerAsPawn);
 				}
 			}
-			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, QueryInteractDistance, 20, HasFoundAnyObject ? FColor::Green : FColor::Red, false, 2.0f, 0, 2.0f);
+			//DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, QueryInteractDistance, 20, HasFoundAnyObject ? FColor::Green : FColor::Red, false, 2.0f, 0, 2.0f);
 		}
 
-		DrawDebugLine(GetWorld(), EyeLocation, End, HasFoundAnyObject ? FColor::Green : FColor::Red, false, 2.0f, 0, 2.0f);
+		//DrawDebugLine(GetWorld(), EyeLocation, End, HasFoundAnyObject ? FColor::Green : FColor::Red, false, 2.0f, 0, 2.0f);
 		//DrawDebugSphere(GetWorld(), EyeLocation, QueryInteractDistance, 20, HasFoundAnyObject ? FColor::Green : FColor::Red, false, 2.0f, 0, 2.0f);
 	}
 

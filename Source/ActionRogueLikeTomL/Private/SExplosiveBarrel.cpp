@@ -55,6 +55,14 @@ void ASExplosiveBarrel::Tick(float DeltaTime)
 
 void ASExplosiveBarrel::OnBarrelHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	RadialForceComp->FireImpulse();
+	Explode();
+}
+
+void ASExplosiveBarrel::Explode()
+{
+	if (RadialForceComp)
+	{
+		RadialForceComp->FireImpulse();
+	}
 }
 
