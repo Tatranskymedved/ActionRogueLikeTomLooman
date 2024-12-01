@@ -9,6 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "SInteractionComponent.h"
 #include "Animation/AnimMontage.h"
+#include <Kismet/KismetMathLibrary.h>
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -111,15 +112,41 @@ void ASCharacter::PrimaryAttack()
 void ASCharacter::PrimaryAttack_TimeElapsed()
 {
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	FHitResult Hit;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	FCollisionResponseParams ResponseParams;
 
-	FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);
+	//FVector CameraWorldLocation = SpringArmComp->SocketOffset + this->GetActorLocation(); // Doesn't WORK!
+	FVector CameraWorldLocation = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
+	FVector TraceEnd = CameraWorldLocation + (GetControlRotation().Vector() * 1000000.0f);
+
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(Hit, CameraWorldLocation, TraceEnd, ECC_WorldDynamic, QueryParams, ResponseParams);
+	//DrawDebugLine(GetWorld(), CameraWorldLocation, Hit.Location, FColor::Purple, false, 3.0f, 0U, 2.0f);
+
+	FRotator ProjectileRotation;
+	if (bTraceSuccess)
+	{
+		// We usually "hit" something by the trace, we set rotation from hand to the hit location
+		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, Hit.Location);
+
+		// Debugging line from camera to where we hit:
+		//FVector ImpactLocation = ImpactLocation = CameraWorldLocation + (ProjectileRotation.Vector() * Hit.Distance);
+		//DrawDebugLine(GetWorld(), CameraWorldLocation, Hit.Location, FColor::Green, false, 3.0f, 0U, 2.0f);
+	}
+	else
+	{
+		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, TraceEnd);
+	}
+
+	FTransform SpawnTM = FTransform(ProjectileRotation, HandLocation);
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParams.Instigator = this;
 
 	AActor* ProjectileActor = GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
-	
+
 	if (ProjectileActor)
 	{
 		MoveIgnoreActorAdd(ProjectileActor);
