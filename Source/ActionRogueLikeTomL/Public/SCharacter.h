@@ -22,6 +22,9 @@ protected:
 	TSubclassOf<AActor> ProjectileClass;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> SecondaryProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AttackAnim;
 
 	FTimerHandle TimerHandle_PrimaryAttack;
@@ -56,6 +59,9 @@ public:
 
 	void PrimaryAttack();
 	void PrimaryAttack_TimeElapsed();
+
+	void SecondaryAttack();
+	void SecondaryAttack_TimeElapsed();
 
 	void PrimaryInteract();
 };

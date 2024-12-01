@@ -98,12 +98,19 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", EInputEvent::IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("SecondaryAttack", EInputEvent::IE_Pressed, this, &ASCharacter::SecondaryAttack);
 	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ASCharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", EInputEvent::IE_Pressed, this, &ASCharacter::PrimaryInteract);
 }
 
 void ASCharacter::PrimaryAttack()
 {
+	if (!ProjectileClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No primary projectile was set for player."));
+		return;
+	}
+
 	PlayAnimMontage(AttackAnim);
 
 	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, 0.2f);
@@ -152,6 +159,55 @@ void ASCharacter::PrimaryAttack_TimeElapsed()
 		MoveIgnoreActorAdd(ProjectileActor);
 	}
 }
+
+void ASCharacter::SecondaryAttack()
+{
+	if (!SecondaryProjectileClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No secondary projectile was set for player."));
+		return;
+	}
+	PlayAnimMontage(AttackAnim);
+
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::SecondaryAttack_TimeElapsed, 0.2f);
+}
+void ASCharacter::SecondaryAttack_TimeElapsed()
+{
+	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	FHitResult Hit;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	FCollisionResponseParams ResponseParams;
+
+	FVector CameraWorldLocation = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
+	FVector TraceEnd = CameraWorldLocation + (GetControlRotation().Vector() * 1000000.0f);
+
+	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(Hit, CameraWorldLocation, TraceEnd, ECC_WorldDynamic, QueryParams, ResponseParams);
+
+	FRotator ProjectileRotation;
+	if (bTraceSuccess)
+	{
+		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, Hit.Location);
+	}
+	else
+	{
+		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, TraceEnd);
+	}
+
+	FTransform SpawnTM = FTransform(ProjectileRotation, HandLocation);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Instigator = this;
+
+	AActor* ProjectileActor = GetWorld()->SpawnActor<AActor>(SecondaryProjectileClass, SpawnTM, SpawnParams);
+
+	if (ProjectileActor)
+	{
+		MoveIgnoreActorAdd(ProjectileActor);
+	}
+}
+
 
 void ASCharacter::PrimaryInteract()
 {
