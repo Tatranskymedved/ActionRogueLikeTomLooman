@@ -10,6 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class USInteractionComponent;
 class UAnimMontage;
+class ASProjectileSpawner;
 
 UCLASS()
 class ACTIONROGUELIKETOML_API ASCharacter : public ACharacter
@@ -44,6 +45,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USInteractionComponent* InteractionComp;
 
+	UPROPERTY(VisibleAnywhere)
+	ASProjectileSpawner* ProjectileSpawner;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -64,4 +68,6 @@ public:
 	void SecondaryAttack_TimeElapsed();
 
 	void PrimaryInteract();
+
+	void Dash();
 };

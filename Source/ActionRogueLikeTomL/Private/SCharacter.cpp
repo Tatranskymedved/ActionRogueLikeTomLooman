@@ -10,6 +10,7 @@
 #include "SInteractionComponent.h"
 #include "Animation/AnimMontage.h"
 #include <Kismet/KismetMathLibrary.h>
+#include <SProjectileSpawner.h>
 
 // Sets default values
 ASCharacter::ASCharacter()
@@ -25,6 +26,8 @@ ASCharacter::ASCharacter()
 	CameraComp->SetupAttachment(SpringArmComp);
 
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
+
+	ProjectileSpawner = CreateDefaultSubobject<ASProjectileSpawner>("ProjectileSpawner");
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -99,8 +102,10 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("PrimaryAttack", EInputEvent::IE_Pressed, this, &ASCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("SecondaryAttack", EInputEvent::IE_Pressed, this, &ASCharacter::SecondaryAttack);
-	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ASCharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", EInputEvent::IE_Pressed, this, &ASCharacter::PrimaryInteract);
+
+	PlayerInputComponent->BindAction("Jump", EInputEvent::IE_Pressed, this, &ASCharacter::Jump);
+	PlayerInputComponent->BindAction("Dash", EInputEvent::IE_Pressed, this, &ASCharacter::Dash);
 }
 
 void ASCharacter::PrimaryAttack()
@@ -119,40 +124,9 @@ void ASCharacter::PrimaryAttack()
 void ASCharacter::PrimaryAttack_TimeElapsed()
 {
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-	FHitResult Hit;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	FCollisionResponseParams ResponseParams;
-
-	//FVector CameraWorldLocation = SpringArmComp->SocketOffset + this->GetActorLocation(); // Doesn't WORK!
 	FVector CameraWorldLocation = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
-	FVector TraceEnd = CameraWorldLocation + (GetControlRotation().Vector() * 1000000.0f);
 
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(Hit, CameraWorldLocation, TraceEnd, ECC_WorldDynamic, QueryParams, ResponseParams);
-	//DrawDebugLine(GetWorld(), CameraWorldLocation, Hit.Location, FColor::Purple, false, 3.0f, 0U, 2.0f);
-
-	FRotator ProjectileRotation;
-	if (bTraceSuccess)
-	{
-		// We usually "hit" something by the trace, we set rotation from hand to the hit location
-		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, Hit.Location);
-
-		// Debugging line from camera to where we hit:
-		//FVector ImpactLocation = ImpactLocation = CameraWorldLocation + (ProjectileRotation.Vector() * Hit.Distance);
-		//DrawDebugLine(GetWorld(), CameraWorldLocation, Hit.Location, FColor::Green, false, 3.0f, 0U, 2.0f);
-	}
-	else
-	{
-		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, TraceEnd);
-	}
-
-	FTransform SpawnTM = FTransform(ProjectileRotation, HandLocation);
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
-
-	AActor* ProjectileActor = GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	AActor* ProjectileActor = ProjectileSpawner->SpawnProjectileWithLineTrace(ProjectileClass, GetWorld(), this, HandLocation, CameraWorldLocation, GetControlRotation().Vector());
 
 	if (ProjectileActor)
 	{
@@ -174,33 +148,10 @@ void ASCharacter::SecondaryAttack()
 void ASCharacter::SecondaryAttack_TimeElapsed()
 {
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-	FHitResult Hit;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	FCollisionResponseParams ResponseParams;
-
 	FVector CameraWorldLocation = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
-	FVector TraceEnd = CameraWorldLocation + (GetControlRotation().Vector() * 1000000.0f);
 
-	bool bTraceSuccess = GetWorld()->LineTraceSingleByChannel(Hit, CameraWorldLocation, TraceEnd, ECC_WorldDynamic, QueryParams, ResponseParams);
-
-	FRotator ProjectileRotation;
-	if (bTraceSuccess)
-	{
-		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, Hit.Location);
-	}
-	else
-	{
-		ProjectileRotation = UKismetMathLibrary::FindLookAtRotation(HandLocation, TraceEnd);
-	}
-
-	FTransform SpawnTM = FTransform(ProjectileRotation, HandLocation);
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
-
-	AActor* ProjectileActor = GetWorld()->SpawnActor<AActor>(SecondaryProjectileClass, SpawnTM, SpawnParams);
+	//ASProjectileSpawner* Projectile;
+	AActor* ProjectileActor = ProjectileSpawner->SpawnProjectileWithLineTrace(SecondaryProjectileClass, GetWorld(), this, HandLocation, CameraWorldLocation, GetControlRotation().Vector());
 
 	if (ProjectileActor)
 	{
@@ -208,11 +159,15 @@ void ASCharacter::SecondaryAttack_TimeElapsed()
 	}
 }
 
-
 void ASCharacter::PrimaryInteract()
 {
 	if (InteractionComp)
 	{
 		InteractionComp->PrimaryInteract();
 	}
+}
+
+void ASCharacter::Dash()
+{
+
 }
