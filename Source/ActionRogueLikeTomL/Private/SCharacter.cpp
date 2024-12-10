@@ -162,7 +162,7 @@ void ASCharacter::SecondaryAttack_TimeElapsed()
 
 void ASCharacter::PrimaryInteract()
 {
-	if (InteractionComp)
+	if (ensure(InteractionComp))
 	{
 		InteractionComp->PrimaryInteract();
 	}
