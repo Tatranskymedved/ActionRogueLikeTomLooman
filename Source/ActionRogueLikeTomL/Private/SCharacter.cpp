@@ -118,6 +118,7 @@ void ASCharacter::PrimaryAttack()
 
 	PlayAnimMontage(AttackAnim);
 
+	//Delayed spawn of projectile so that animation can play
 	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, 0.2f);
 }
 
@@ -143,6 +144,7 @@ void ASCharacter::SecondaryAttack()
 	}
 	PlayAnimMontage(AttackAnim);
 
+	//Delayed spawn of projectile so that animation can play
 	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::SecondaryAttack_TimeElapsed, 0.2f);
 }
 void ASCharacter::SecondaryAttack_TimeElapsed()
@@ -150,7 +152,6 @@ void ASCharacter::SecondaryAttack_TimeElapsed()
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 	FVector CameraWorldLocation = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
 
-	//ASProjectileSpawner* Projectile;
 	AActor* ProjectileActor = ProjectileSpawner->SpawnProjectileWithLineTrace(SecondaryProjectileClass, GetWorld(), this, HandLocation, CameraWorldLocation, GetControlRotation().Vector());
 
 	if (ProjectileActor)
@@ -169,5 +170,25 @@ void ASCharacter::PrimaryInteract()
 
 void ASCharacter::Dash()
 {
+	if (!DashProjectileClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No dash projectile was set for player."));
+		return;
+	}
+	PlayAnimMontage(AttackAnim);
 
+	//Delayed spawn of projectile so that animation can play
+	GetWorldTimerManager().SetTimer(TimerHandle_Dash, this, &ASCharacter::Dash_TimeElapsed, 0.2f);
+}
+void ASCharacter::Dash_TimeElapsed()
+{
+	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	FVector CameraWorldLocation = GetWorld()->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
+
+	AActor* ProjectileActor = ProjectileSpawner->SpawnProjectileWithLineTrace(DashProjectileClass, GetWorld(), this, HandLocation, CameraWorldLocation, GetControlRotation().Vector());
+
+	if (ProjectileActor)
+	{
+		MoveIgnoreActorAdd(ProjectileActor);
+	}
 }
