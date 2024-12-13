@@ -11,6 +11,7 @@ class UCameraComponent;
 class USInteractionComponent;
 class UAnimMontage;
 class ASProjectileSpawner;
+class USAttributeComponent;
 
 UCLASS()
 class ACTIONROGUELIKETOML_API ASCharacter : public ACharacter
@@ -51,6 +52,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	ASProjectileSpawner* ProjectileSpawner;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USAttributeComponent* AttributeComp;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

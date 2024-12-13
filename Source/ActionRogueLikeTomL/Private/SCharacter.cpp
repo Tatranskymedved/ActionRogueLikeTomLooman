@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Camera/CameraComponent.h"
 #include "SInteractionComponent.h"
+#include "SAttributeComponent.h"
 #include "Animation/AnimMontage.h"
 #include <Kismet/KismetMathLibrary.h>
 #include <SProjectileSpawner.h>
@@ -28,6 +29,8 @@ ASCharacter::ASCharacter()
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
 
 	ProjectileSpawner = CreateDefaultSubobject<ASProjectileSpawner>("ProjectileSpawner");
+
+	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributeComp");
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
