@@ -37,11 +37,21 @@ ASCharacter::ASCharacter()
 	bUseControllerRotationYaw = false;
 }
 
+void ASCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	// Trigger when health is changed (damage/healing)
+	if (AttributeComp)
+	{
+		AttributeComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
+	}
+}
+
 // Called when the game starts or when spawned
 void ASCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 void ASCharacter::MoveForward(float Value)
@@ -193,5 +203,17 @@ void ASCharacter::Dash_TimeElapsed()
 	if (ProjectileActor)
 	{
 		MoveIgnoreActorAdd(ProjectileActor);
+	}
+}
+
+void ASCharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta)
+{
+	if (NewHealth <= 0.0f && Delta < 0.0f)
+	{
+		APlayerController* PlayerController = Cast<APlayerController>(GetController());
+		if (PlayerController)
+		{
+			DisableInput(PlayerController);
+		}
 	}
 }

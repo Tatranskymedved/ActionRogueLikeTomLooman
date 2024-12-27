@@ -18,6 +18,12 @@ class ACTIONROGUELIKETOML_API ASMagicProjectile : public AActor
 public:	
 	ASMagicProjectile();
 
+	/// <summary>
+	/// Positive value of how much HP should be taken from target. If negative, it will be healing target instead.
+	/// </summary>
+	UPROPERTY(EditAnywhere)
+	float DamageAmount = 20.0f;
+
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
