@@ -2,10 +2,12 @@
 
 
 #include "SMagicProjectile.h"
+#include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "SAttributeComponent.h"
+#include <Kismet/GameplayStatics.h>
 
 
 ASMagicProjectile::ASMagicProjectile()
@@ -29,6 +31,10 @@ ASMagicProjectile::ASMagicProjectile()
 	MovementComp->bRotationFollowsVelocity = true;
 	MovementComp->bInitialVelocityInLocalSpace = true;
 	//MovementComp->SetupAttachment(SphereComp);
+
+	OnExplodeParticles = CreateDefaultSubobject<UParticleSystem>("OnExplodeParticles");
+
+	AudioComp = CreateDefaultSubobject<UAudioComponent>("AudioComp");
 }
 
 void ASMagicProjectile::OnActorBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -43,18 +49,64 @@ void ASMagicProjectile::OnActorBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	}
 }
 
+void ASMagicProjectile::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (SphereComp)
+	{
+		SphereComp->OnComponentHit.AddDynamic(this, &ASMagicProjectile::OnProjectileHit);
+	}
+}
+
 // Called when the game starts or when spawned
 void ASMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
 	SphereComp->IgnoreActorWhenMoving(GetInstigator(), true);
+	GetWorldTimerManager().SetTimer(TimerHandle_LifeTime, this, &ASMagicProjectile::ProjectileLifetime_TimeElapsed, ProjectileLifetimeSeconds);
+}
+
+void ASMagicProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	//FString CombinedString = FString::Printf(TEXT("Hit at location: %s"), *Hit.ImpactPoint.ToString());
+	//DrawDebugString(GetWorld(), Hit.ImpactPoint, CombinedString, nullptr, FColor::Green, 2.0f, true);
+
+	FTransform HitTM;
+	HitTM.SetLocation(Hit.Location);
+
+	Explode(HitTM);
 }
 
 // Called every frame
 void ASMagicProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
+void ASMagicProjectile::ProjectileLifetime_TimeElapsed()
+{
+	FTransform actorTM = GetActorTransform();
+	this->Explode(actorTM);
+}
+
+void ASMagicProjectile::Explode(FTransform LocationTM)
+{
+	if (MovementComp) { //Stop projectile on the spot
+		MovementComp->Deactivate();
+	}
+	if (SphereComp) { //Stop further collisions
+		SphereComp->Deactivate();
+	}
+	if (EffectComp) { //Disable particles
+		EffectComp->Deactivate();
+	}
+	if (TimerHandle_LifeTime.IsValid()) {
+		GetWorldTimerManager().ClearTimer(TimerHandle_LifeTime);
+	}
+	if (OnExplodeParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), OnExplodeParticles, LocationTM, true);
+	}
+}
