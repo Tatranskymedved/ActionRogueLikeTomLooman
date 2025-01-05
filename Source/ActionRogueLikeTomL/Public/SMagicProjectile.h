@@ -44,8 +44,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAudioComponent* AudioComp;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Explosion effects")
 	UParticleSystem* OnExplodeParticles = nullptr;
+	UPROPERTY(EditAnywhere, Category = "Explosion effects")
+	USoundBase* OnExplodeAudio = nullptr;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -53,18 +55,19 @@ protected:
 	FTimerHandle TimerHandle_LifeTime;
 	virtual void ProjectileLifetime_TimeElapsed();
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void PostInitializeComponents() override;
-
 	UFUNCTION()
 	virtual void OnActorBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
 	void OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-	UFUNCTION(BlueprintCallable)
-	virtual void Explode(FTransform Location);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void Explode(FTransform Location);
+
+	// Function that will be called at the end of Explode; by default handles Actor lifetime by destroying it
+	virtual void PostExplode();
+
+public:
+
+	virtual void PostInitializeComponents() override;
 };

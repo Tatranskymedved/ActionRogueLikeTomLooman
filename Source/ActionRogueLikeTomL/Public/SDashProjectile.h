@@ -31,10 +31,11 @@ protected:
 	FTimerHandle TimerHandle_Teleportation;
 	void ProjectileTeleportation_TimeElapsed();
 
+	virtual void Explode_Implementation(FTransform Location) override;
+
+	virtual void PostExplode() override;
 public:
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	virtual void Explode(FTransform Location) override;
 };

@@ -35,6 +35,9 @@ ASMagicProjectile::ASMagicProjectile()
 	OnExplodeParticles = CreateDefaultSubobject<UParticleSystem>("OnExplodeParticles");
 
 	AudioComp = CreateDefaultSubobject<UAudioComponent>("AudioComp");
+	AudioComp->SetupAttachment(SphereComp);
+	AudioComp->AutoAttachParent = SphereComp;
+	AudioComp->bAutoManageAttachment = true;
 }
 
 void ASMagicProjectile::OnActorBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -79,19 +82,13 @@ void ASMagicProjectile::OnProjectileHit(UPrimitiveComponent* HitComponent, AActo
 	Explode(HitTM);
 }
 
-// Called every frame
-void ASMagicProjectile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
 void ASMagicProjectile::ProjectileLifetime_TimeElapsed()
 {
 	FTransform actorTM = GetActorTransform();
 	this->Explode(actorTM);
 }
 
-void ASMagicProjectile::Explode(FTransform LocationTM)
+void ASMagicProjectile::Explode_Implementation(FTransform LocationTM)
 {
 	if (MovementComp) { //Stop projectile on the spot
 		MovementComp->Deactivate();
@@ -102,11 +99,23 @@ void ASMagicProjectile::Explode(FTransform LocationTM)
 	if (EffectComp) { //Disable particles
 		EffectComp->Deactivate();
 	}
+	if (AudioComp) { //Disable audio
+		AudioComp->Deactivate();
+	}
 	if (TimerHandle_LifeTime.IsValid()) {
 		GetWorldTimerManager().ClearTimer(TimerHandle_LifeTime);
 	}
-	if (OnExplodeParticles)
-	{
+	if (OnExplodeParticles) {
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), OnExplodeParticles, LocationTM, true);
 	}
+	if (OnExplodeAudio) {
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), OnExplodeAudio, LocationTM.GetLocation(), UE::Math::TRotator<double>::ZeroRotator, 1.0f, 1.0f);
+	}
+
+	PostExplode();
+}
+
+void ASMagicProjectile::PostExplode()
+{
+	Destroy();
 }

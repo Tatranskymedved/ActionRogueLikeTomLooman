@@ -29,12 +29,13 @@ void ASDashProjectile::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ASDashProjectile::Explode(FTransform LocationTM)
+void ASDashProjectile::Explode_Implementation(FTransform LocationTM)
 {
-	Super::Explode(LocationTM);
+	Super::Explode_Implementation(LocationTM);
 
 	GetWorldTimerManager().SetTimer(TimerHandle_Teleportation, this, &ASDashProjectile::ProjectileTeleportation_TimeElapsed, ProjectileTeleportationSeconds);
 }
+
 
 void ASDashProjectile::ProjectileTeleportation_TimeElapsed()
 {
@@ -49,4 +50,10 @@ void ASDashProjectile::ProjectileTeleportation_TimeElapsed()
 	}
 
 	Destroy();
+}
+
+void ASDashProjectile::PostExplode()
+{
+	// We override this function from paernt: Not invoking parent's variant so we don't immediatelly destroy actor;
+	// Rather we let it be destroyed from `ProjectileTeleportation_TimeElapsed`
 }
